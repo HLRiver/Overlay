@@ -26,13 +26,13 @@ int Draw(DWORD_PTR ULevel) {
 		auto NamesPointer = Read<DWORD_PTR>(NamesIndex + ObjectIndex % ElementsPerChunk * sizeof(DWORD_PTR));
 		string ActorName = Read<FNameEntry>(NamesPointer).AnsiName;
 
-		if (ActorName.find("BP_") == -1)
-			continue;
-
 		auto Name = ActorName;
 		auto Color = Common;
 
 		/* --------- Sample list --------- */
+
+		if (ActorName.find("BP_") == -1)
+			continue;
 
 		// Debug
 		if (Debug) {
@@ -43,10 +43,22 @@ int Draw(DWORD_PTR ULevel) {
 			wstring PlayerString = Read<FString>(PlayerIndex).WideName;
 			Name = string(PlayerString.begin(), PlayerString.end());
 			Color = Player;
-		// Ships
-		} else if (ActorName.find("ShipTemplate") != -1 || ActorName.find("ShipNetProxy") != -1) {
-			Name = "Ship";
+		// Sloop
+		} else if (ActorName.find("BP_SmallShipTemplate") != -1 || ActorName.find("BP_SmallShipNetProxy") != -1) {
+			Name = "Sloop";
 			Color = Ship;
+		// Brigantine
+		} else if (ActorName.find("BP_MediumShipTemplate") != -1 || ActorName.find("BP_MediumShipNetProxy") != -1) {
+			Name = "Brigantine";
+			Color = Ship;
+		 // Galleon
+		} else if (ActorName.find("BP_LargeShipTemplate") != -1 || ActorName.find("BP_LargeShipNetProxy") != -1) {
+			Name = "Galleon";
+			Color = Ship;
+		 // Ghost Ship
+		} else if (ActorName.find("BP_AILargeShipTemplate") != -1 || ActorName.find("BP_AILargeShipShipNetProxy") != -1) {
+			Name = "Ghost Ship";
+			Color = Enemy;
 		// Shipwrecks
 		} else if (ActorName.find("Shipwreck_01_a_NetProxy") != -1) {
 			Name = "Shipwreck";
@@ -152,7 +164,7 @@ int Draw(DWORD_PTR ULevel) {
 		auto PlayerCamera = Read<FMinimalViewInfo>(ACameraManager + CameraCache + POV);
 
 		auto Location = ActorComponent.Translation - PlayerCamera.Location;
-		Name += " [" + to_string((int)sqrtf(Location.Dot(Location)) / 100) + "m]";
+		Name += " [" + to_string((int)sqrt(Location.Dot(Location)) / 100) + "m]";
 		wstring NameWide(Name.begin(), Name.end());
 
 		auto Project = WorldToScreen(Location, PlayerCamera, X / 2.f, Y / 2.f);
@@ -216,7 +228,7 @@ int Render(HWND Window) {
 		exit(1);
 	}
 
-	Sleep(5);
+	Sleep(10);
 
 	return 0;
 }
@@ -226,11 +238,11 @@ LRESULT CALLBACK WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lPa
 		case WM_CREATE:
 			D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &Factory);
 			auto RenderProperties = RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED));
-			Factory->CreateHwndRenderTarget(RenderProperties, HwndRenderTargetProperties(Window, SizeU(X, Y)), &RenderTarget);
+			Factory->CreateHwndRenderTarget(RenderProperties, HwndRenderTargetProperties(Window, SizeU(X, Y), D2D1_PRESENT_OPTIONS_IMMEDIATELY), &RenderTarget);
 			DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), (IUnknown**)&DWriteFactory);
-			DWriteFactory->CreateTextFormat(L"Tahoma", 0, DWRITE_FONT_WEIGHT_THIN, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 12, L"en-us", &TextFormat);
+			DWriteFactory->CreateTextFormat(L"Tahoma", 0, DWRITE_FONT_WEIGHT_THIN, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 12.f, L"en-us", &TextFormat);
 
-			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::Firebrick), &Player);
+			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::Red), &Player);
 			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::LimeGreen), &Ship);
 			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::White), &Common);
 			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::Blue), &Rare);
@@ -238,7 +250,7 @@ LRESULT CALLBACK WindowProc(HWND Window, UINT Message, WPARAM wParam, LPARAM lPa
 			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::Orange), &Mythical);
 			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::SlateBlue), &Cloud);
 			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::Silver), &Crate);
-			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::Red), &Enemy);
+			RenderTarget->CreateSolidColorBrush(ColorF(ColorF::OrangeRed), &Enemy);
 			return 0;
 
 		case WM_PAINT:

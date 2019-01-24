@@ -198,9 +198,15 @@ FVector WorldToScreen(FVector WorldLocation, FMinimalViewInfo Camera, float Size
 	if (Transform.Z < 1.f)
 		Transform.Z = 1.f;
 
+	auto Ratio = SizeX / SizeY;
+	if (Ratio < 4.f / 3.f)
+		Ratio = 4.f / 3.f;
+
+	auto FOV = Ratio / (16.f / 9.f) * tan((Camera.FOV / 2) * (PI / 180.f));
+
 	FVector Location;
-	Location.X = SizeX + Transform.X * (SizeX / tan(Camera.FOV * PI / 360.f)) / Transform.Z;
-	Location.Y = SizeY - Transform.Y * (SizeX / tan(Camera.FOV * PI / 360.f)) / Transform.Z;
+	Location.X = SizeX + Transform.X * SizeX / FOV / Transform.Z;
+	Location.Y = SizeY - Transform.Y * SizeX / FOV / Transform.Z;
 
 	return Location;
 }
